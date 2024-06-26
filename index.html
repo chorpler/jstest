@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Event Tooltip</title>
+  <style>
+    #tooltip {
+      position: absolute;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 5px;
+      display: none;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="myCanvas" width="800" height="400"></canvas>
+  <div id="tooltip"></div>
+
+  <script>
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('tooltip');
+
+    // Example service event data
+    const serviceEvents = [
+      { x: 100, y: 50, width: 10, height: 300, datetime: '2024-06-26 10:00', eventType: 'Maintenance', instrumentName: 'Instrument 1', comment: 'Routine check' },
+      { x: 200, y: 50, width: 10, height: 300, datetime: '2024-06-26 12:00', eventType: 'Repair', instrumentName: 'Instrument 2', comment: 'Fixed issue' }
+    ];
+
+    // Draw the service event lines
+    function drawServiceEventLines() {
+      serviceEvents.forEach(event => {
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        ctx.fillRect(event.x, event.y, event.width, event.height);
+      });
+    }
+
+    // Check if mouse is over a service event line
+    function getServiceEventAt(x, y) {
+      return serviceEvents.find(event =>
+        x >= event.x && x <= event.x + event.width &&
+        y >= event.y && y <= event.y + event.height
+      );
+    }
+
+    // Handle mouse move event
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const event = getServiceEventAt(x, y);
+
+      if (event) {
+        tooltip.style.display = 'block';
+        tooltip.style.left = `${e.clientX + 10}px`;
+        tooltip.style.top = `${e.clientY + 10}px`;
+        tooltip.innerHTML = `
+          <strong>Date:</strong> ${event.datetime}<br>
+          <strong>Event:</strong> ${event.eventType}<br>
+          <strong>Instrument:</strong> ${event.instrumentName}<br>
+          <strong>Comment:</strong> ${event.comment}
+        `;
+      } else {
+        tooltip.style.display = 'none';
+      }
+    });
+
+    // Handle mouse out event
+    canvas.addEventListener('mouseout', () => {
+      tooltip.style.display = 'none';
+    });
+
+    // Initial draw
+    drawServiceEventLines();
+  </script>
+</body>
+</html>
