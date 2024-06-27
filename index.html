@@ -9,15 +9,56 @@
       position: absolute;
       background-color: #fff;
       border: 1px solid #ccc;
+      box-shadow: rgb(82, 88, 92) 2px 2px 4px 0px;
       padding: 5px;
       display: none;
       pointer-events: none;
+    }
+    #tooltip2 {
+      position: absolute;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      box-shadow: rgb(82, 88, 92) 2px 2px 4px 0px;
+      padding: 5px;
+      /* width: 100px;
+      height: 100px; */
+      display: block;
+    }
+    .tooltip-table {
+      --placeholder-var: 20vw;
+      border-collapse: collapse;
+      font-family: 'Courier New', monospace;
+    }
+    .tooltip-table td {
+      --placeholder-var: 20vw;
+      border: 1px dotted #999;
+      padding: 2px;
+    }
+    .tooltip-table td.hdr {
+      --placeholder-var: 20vw;
+      border: 1px dotted #999;
+      padding: 2px;
+      font-weight: bold;
+      text-align: right;
+    }
+    .tooltip-table td.data {
+      --placeholder-var: 20vw;
+      border: 1px dotted #999;
+      padding: 2px;
     }
   </style>
 </head>
 <body>
   <canvas id="myCanvas" width="800" height="400"></canvas>
   <div id="tooltip"></div>
+  <div id="tooltip2">
+    <table class="tooltip-table"><tbody>
+      <tr><td class="hdr">Date</td><td class="data">2024-06-26 12:00</td></tr>
+      <tr><td class="hdr">Event</td><td class="data">Repair</td></tr>
+      <tr><td class="hdr">Inst</td><td class="data">Instrument 2</td></tr>
+      <tr><td class="hdr">Note</td><td class="data">Fixed issue</td></tr>
+    </tbody></table>
+  </div>
 
   <script>
     const canvas = document.getElementById('myCanvas');
@@ -51,18 +92,27 @@
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      const event = getServiceEventAt(x, y);
+      const evt = getServiceEventAt(x, y);
 
-      if (event) {
+      if (evt) {
         tooltip.style.display = 'block';
         tooltip.style.left = `${e.clientX + 10}px`;
         tooltip.style.top = `${e.clientY + 10}px`;
         tooltip.innerHTML = `
-          <strong>Date:</strong> ${event.datetime}<br>
-          <strong>Event:</strong> ${event.eventType}<br>
-          <strong>Instrument:</strong> ${event.instrumentName}<br>
-          <strong>Comment:</strong> ${event.comment}
+          <strong>Date:</strong> ${evt.datetime}<br>
+          <strong>Event:</strong> ${evt.eventType}<br>
+          <strong>Instrument:</strong> ${evt.instrumentName}<br>
+          <strong>Comment:</strong> ${evt.comment}
         `;
+        let tbl = `
+        <table class="tooltip-table"><tbody>
+          <tr><td class="hdr">Date</td><td class="data">${evt.datetime}</td></tr>
+          <tr><td class="hdr">Event</td><td class="data">${evt.eventType}</td></tr>
+          <tr><td class="hdr">Inst</td><td class="data">${evt.instrumentName}</td></tr>
+          <tr><td class="hdr">Note</td><td class="data">${evt.comment}</td></tr>
+        </tbody></table>
+        `;
+        tooltip.innerHTML = tbl;
       } else {
         tooltip.style.display = 'none';
       }
