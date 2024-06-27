@@ -47,7 +47,7 @@
   </style>
 </head>
 <body>
-  <canvas id="myCanvas" width="800" height="400"></canvas>
+  <div id="graphs"></div>
   <div id="tooltip"></div>
   <div id="tooltip2">
     <table class="tooltip-table"><tbody>
@@ -59,70 +59,155 @@
   </div>
 
   <script>
-    const canvas = document.getElementById('myCanvas');
-    const ctx = canvas.getContext('2d');
+    const graphsContainer = document.getElementById('graphs');
     const tooltip = document.getElementById('tooltip');
 
     // Example service event data
     const serviceEvents = [
-      { x: 100, y: 50, width: 10, height: 300, datetime: '2024-06-26 10:00', eventType: 'Maintenance', instrumentName: 'Instrument 1', comment: 'Routine check' },
-      { x: 200, y: 50, width: 10, height: 300, datetime: '2024-06-26 12:00', eventType: 'Repair', instrumentName: 'Instrument 2', comment: 'Fixed issue' }
+      { datetime: '2024-06-26T10:00:00', eventType: 'Maintenance', instrumentName: 'Instrument 1', comment: 'Routine check' },
+      { datetime: '2024-06-26T12:00:00', eventType: 'Repair', instrumentName: 'Instrument 2', comment: 'Fixed issue' }
     ];
 
-    // Draw the service event lines
-    function drawServiceEventLines() {
+    // Example graph data
+    const graphs = [
+      { id: 'graph1', startDate: new Date('2024-06-26T00:00:00'), endDate: new Date('2024-06-27T00:00:00') },
+      { id: 'graph2', startDate: new Date('2024-06-26T00:00:00'), endDate: new Date('2024-06-27T00:00:00') }
+    ];
+
+    function createGraphCanvas(graph) {
+      const canvas = document.createElement('canvas');
+      canvas.id = graph.id;
+      canvas.width = 800;
+      canvas.height = 400;
+      graphsContainer.appendChild(canvas);
+      return canvas;
+    }
+
+    function dateToX(date, startDate, endDate, canvasWidth) {
+      const totalTime = endDate - startDate;
+      const timeSinceStart = new Date(date) - startDate;
+      return (timeSinceStart / totalTime) * canvasWidth;
+    }
+
+    // // Example service event data
+    // const serviceEvents = [
+    //   { x: 100, y: 50, width: 10, height: 300, datetime: '2024-06-26 10:00', eventType: 'Maintenance', instrumentName: 'Instrument 1', comment: 'Routine check' },
+    //   { x: 200, y: 50, width: 10, height: 300, datetime: '2024-06-26 12:00', eventType: 'Repair', instrumentName: 'Instrument 2', comment: 'Fixed issue' }
+    // ];
+
+    // function createGraphCanvas(graph) {
+    //   const canvas = document.createElement('canvas');
+    //   canvas.id = graph.id;
+    //   canvas.width = 800;
+    //   canvas.height = 400;
+    //   graphsContainer.appendChild(canvas);
+    //   return canvas;
+    // }
+
+    // function dateToX(date, startDate, endDate, canvasWidth) {
+    //   const totalTime = endDate - startDate;
+    //   const timeSinceStart = new Date(date) - startDate;
+    //   return (timeSinceStart / totalTime) * canvasWidth;
+    // }
+
+    function drawServiceEventLines(ctx, canvas, startDate, endDate) {
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+
       serviceEvents.forEach(event => {
+        const x = dateToX(event.datetime, startDate, endDate, canvasWidth);
         ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-        ctx.fillRect(event.x, event.y, event.width, event.height);
+        ctx.fillRect(x, 0, 10, canvasHeight);
+        event.x = x;
       });
     }
 
-    // Check if mouse is over a service event line
-    function getServiceEventAt(x, y) {
-      return serviceEvents.find(event =>
-        x >= event.x && x <= event.x + event.width &&
-        y >= event.y && y <= event.y + event.height
-      );
+    function getServiceEventAt(x) {
+      return serviceEvents.find(event => x >= event.x && x <= event.x + 10);
     }
 
-    // Handle mouse move event
-    canvas.addEventListener('mousemove', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const evt = getServiceEventAt(x, y);
+    function addGraphMouseListeners(canvas, startDate, endDate) {
+      canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const evt = getServiceEventAt(x);
 
-      if (evt) {
-        tooltip.style.display = 'block';
-        tooltip.style.left = `${e.clientX + 10}px`;
-        tooltip.style.top = `${e.clientY + 10}px`;
-        tooltip.innerHTML = `
-          <strong>Date:</strong> ${evt.datetime}<br>
-          <strong>Event:</strong> ${evt.eventType}<br>
-          <strong>Instrument:</strong> ${evt.instrumentName}<br>
-          <strong>Comment:</strong> ${evt.comment}
-        `;
-        let tbl = `
-        <table class="tooltip-table"><tbody>
-          <tr><td class="hdr">Date</td><td class="data">${evt.datetime}</td></tr>
-          <tr><td class="hdr">Event</td><td class="data">${evt.eventType}</td></tr>
-          <tr><td class="hdr">Inst</td><td class="data">${evt.instrumentName}</td></tr>
-          <tr><td class="hdr">Note</td><td class="data">${evt.comment}</td></tr>
-        </tbody></table>
-        `;
-        tooltip.innerHTML = tbl;
-      } else {
+        if (evt) {
+          tooltip.style.display = 'block';
+          tooltip.style.left = `${e.clientX + 10}px`;
+          tooltip.style.top = `${e.clientY + 10}px`;
+          // tooltip.innerHTML = `
+          //   <strong>Date:</strong> ${new Date(evt.datetime).toLocaleString()}<br>
+          //   <strong>Event:</strong> ${evt.eventType}<br>
+          //   <strong>Instrument:</strong> ${evt.instrumentName}<br>
+          //   <strong>Comment:</strong> ${evt.comment}
+          // `;
+          let tbl = `
+            <table class="tooltip-table"><tbody>
+              <tr><td class="hdr">Date</td><td class="data">${evt.datetime}</td></tr>
+              <tr><td class="hdr">Event</td><td class="data">${evt.eventType}</td></tr>
+              <tr><td class="hdr">Inst</td><td class="data">${evt.instrumentName}</td></tr>
+              <tr><td class="hdr">Note</td><td class="data">${evt.comment}</td></tr>
+            </tbody></table>
+          `;
+          tooltip.innerHTML = tbl;
+        } else {
+          tooltip.style.display = 'none';
+        }
+      });
+
+      canvas.addEventListener('mouseout', () => {
         tooltip.style.display = 'none';
-      }
+      });
+    }
+
+    // Initialize graphs
+    graphs.forEach(graph => {
+      const canvas = createGraphCanvas(graph);
+      const ctx = canvas.getContext('2d');
+      drawServiceEventLines(ctx, canvas, graph.startDate, graph.endDate);
+      addGraphMouseListeners(canvas, graph.startDate, graph.endDate);
     });
+
+    // Handle mouse move event
+    // canvas.addEventListener('mousemove', (e) => {
+    //   const rect = canvas.getBoundingClientRect();
+    //   const x = e.clientX - rect.left;
+    //   const y = e.clientY - rect.top;
+    //   const evt = getServiceEventAt(x, y);
+
+    //   if (evt) {
+    //     tooltip.style.display = 'block';
+    //     tooltip.style.left = `${e.clientX + 10}px`;
+    //     tooltip.style.top = `${e.clientY + 10}px`;
+    //     tooltip.innerHTML = `
+    //       <strong>Date:</strong> ${evt.datetime}<br>
+    //       <strong>Event:</strong> ${evt.eventType}<br>
+    //       <strong>Instrument:</strong> ${evt.instrumentName}<br>
+    //       <strong>Comment:</strong> ${evt.comment}
+    //     `;
+    //     let tbl = `
+    //     <table class="tooltip-table"><tbody>
+    //       <tr><td class="hdr">Date</td><td class="data">${evt.datetime}</td></tr>
+    //       <tr><td class="hdr">Event</td><td class="data">${evt.eventType}</td></tr>
+    //       <tr><td class="hdr">Inst</td><td class="data">${evt.instrumentName}</td></tr>
+    //       <tr><td class="hdr">Note</td><td class="data">${evt.comment}</td></tr>
+    //     </tbody></table>
+    //     `;
+    //     tooltip.innerHTML = tbl;
+    //   } else {
+    //     tooltip.style.display = 'none';
+    //   }
+    // });
 
     // Handle mouse out event
-    canvas.addEventListener('mouseout', () => {
-      tooltip.style.display = 'none';
-    });
+    // canvas.addEventListener('mouseout', () => {
+    //   tooltip.style.display = 'none';
+    // });
 
     // Initial draw
-    drawServiceEventLines();
+    // drawServiceEventLines();
   </script>
 </body>
 </html>
